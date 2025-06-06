@@ -1,4 +1,5 @@
-import { Injectable, Logger, HttpService } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
 import { RestApiCustomerData } from '../../common/interfaces/customer.interface';
 import { lastValueFrom } from 'rxjs';
 import { AxiosRequestConfig } from 'axios';
@@ -8,7 +9,7 @@ import { ConfigService } from '@nestjs/config';
 export class RestApiSourceService {
   private readonly logger = new Logger(RestApiSourceService.name);
   private apiBaseUrl: string;
-  private apiKey: string; // Ví dụ dùng API Key
+  private apiKey: string;
 
   constructor(
     private httpService: HttpService,
@@ -22,7 +23,7 @@ export class RestApiSourceService {
     try {
       const config: AxiosRequestConfig = {
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`, // Hoặc 'X-API-Key'
+          'Authorization': `Bearer ${this.apiKey}`,
         },
         params: {
           page,
@@ -55,7 +56,6 @@ export class RestApiSourceService {
       allCustomers = allCustomers.concat(customers);
 
       if (customers.length < pageSize) {
-        // Đã lấy hết dữ liệu
         break;
       }
       page++;

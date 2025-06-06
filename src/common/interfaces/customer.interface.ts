@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import { UnifiedCustomerDto } from "../dto/unified-customer.dto";
 
 export interface SqlCustomerData {
@@ -33,7 +34,7 @@ export interface RestApiCustomerData {
 }
 
 export interface UnifiedCustomer extends Omit<UnifiedCustomerDto, 'created_at' | 'updated_at'> {
-  _id?: string;
+  _id?: string | Types.ObjectId;
   created_at: Date;
   updated_at: Date;
 }

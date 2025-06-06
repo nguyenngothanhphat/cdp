@@ -1,7 +1,7 @@
 import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
-import { CUSTOMER_QUEUE_NAME, PROCESS_CUSTOMER_JOB } from '../core_services/queue/queue.constants';
+import { CUSTOMER_QUEUE_NAME } from '../core_services/queue/queue.constants';
 import { UnifiedCustomerDto } from '../common/dto/unified-customer.dto';
 import { TransformationService } from './transformation/transformation.service';
 import { NoSqlService } from '../target_database/nosql/nosql.service';

@@ -18,7 +18,7 @@ export class QueueService {
         PROCESS_CUSTOMER_JOB,
         customerData,
         {
-          removeOnComplete: true, // Xóa job khi hoàn thành
+          removeOnComplete: true,
           removeOnFail: false,
           attempts: 3,
           backoff: {
