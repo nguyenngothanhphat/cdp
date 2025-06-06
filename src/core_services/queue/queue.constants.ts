@@ -1,2 +1,2 @@
-export const CUSTOMER_DATA_QUEUE = 'customer-data-queue';
-export const RAW_CUSTOMER_DATA_JOB = 'raw-customer-data-job';
+export const CUSTOMER_QUEUE_NAME = 'customer-ingestion-queue';
+export const PROCESS_CUSTOMER_JOB = 'processCustomer';

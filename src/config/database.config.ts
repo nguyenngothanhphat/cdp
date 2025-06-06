@@ -1,18 +1,20 @@
 import { registerAs } from '@nestjs/config';
 
-export default registerAs('database', () => ({
+export const databaseConfig = registerAs('database', () => ({
   sql: {
     host: process.env.SQL_DB_HOST,
-    port: parseInt(process.env.SQL_DB_PORT, 10) || 5432,
+    port: parseInt(process.env.SQL_DB_PORT || '5432', 10),
     username: process.env.SQL_DB_USERNAME,
     password: process.env.SQL_DB_PASSWORD,
     database: process.env.SQL_DB_NAME,
-    // ssl: process.env.SQL_DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
+    synchronize: process.env.SQL_DB_SYNCHRONIZE === 'true',
   },
-  nosqlMongoUri: process.env.NOSQL_MONGO_URI,
+  nosql: {
+    uri: process.env.NOSQL_DB_URI,
+  },
   redis: {
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT, 10) || 6379,
-    password: process.env.REDIS_PASSWORD || undefined,
+    host: process.env.REDIS_HOST,
+    port: parseInt(process.env.REDIS_PORT || '6379', 10),
+    password: process.env.REDIS_PASSWORD,
   },
 }));

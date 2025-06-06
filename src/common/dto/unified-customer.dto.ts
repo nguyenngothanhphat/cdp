@@ -1,51 +1,64 @@
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  IsDate,
-} from 'class-validator';
-import { Type } from 'class-transformer';
+import { IsEmail, IsString, IsOptional, IsDateString, IsNumber } from 'class-validator';
+
+export class AddressDto {
+  @IsOptional()
+  @IsString()
+  street?: string;
+
+  @IsOptional()
+  @IsString()
+  city?: string;
+
+  @IsOptional()
+  @IsString()
+  country?: string;
+}
 
 export class UnifiedCustomerDto {
   @IsString()
-  @IsNotEmpty()
-  cdpId: string;
+  common_id: string;
 
+  @IsString()
   @IsEmail()
   email: string;
 
+  @IsOptional()
   @IsString()
-  @IsOptional()
-  firstName?: string;
+  phone?: string;
 
+  @IsOptional()
   @IsString()
-  @IsOptional()
-  lastName?: string;
+  first_name?: string;
 
+  @IsOptional()
   @IsString()
+  last_name?: string;
+
   @IsOptional()
-  phoneNumber?: string;
+  address?: AddressDto;
 
-  // @ValidateNested() // Nếu có sub-DTO
-  // @Type(() => AddressDto)
-  // @IsOptional()
-  // address?: AddressDto;
-
-  @IsDate()
-  @Type(() => Date)
   @IsOptional()
-  originalCreatedAt?: Date;
+  @IsDateString()
+  birth_date?: string;
 
+  @IsOptional()
+  @IsNumber()
+  loyalty_points?: number;
+
+  @IsOptional()
+  @IsDateString()
+  last_purchase_date?: string;
+
+  @IsOptional()
+  api_specific_data?: Record<string, any>;
+
+  @IsOptional()
   @IsString({ each: true })
-  @IsOptional()
-  sourceSystems?: string[];
+  source_system?: string[];
 
-  @IsDate()
-  @Type(() => Date)
-  cdpCreatedAt: Date;
+  @IsDateString()
+  created_at: string;
 
-  @IsDate()
-  @Type(() => Date)
-  cdpUpdatedAt: Date;
+  @IsDateString()
+  updated_at: string;
 }

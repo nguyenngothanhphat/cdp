@@ -1,77 +1,48 @@
-import {
-  Injectable,
-  Logger,
-  OnModuleInit,
-  OnModuleDestroy,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { Client } from 'pg';
-import {
-  QueueService,
-  RawCustomerDataPayload,
-} from '../../core_services/queue/queue.service';
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { CustomerEntity } from './entities/customer.entity';
+import { SqlCustomerData } from '../../common/interfaces/customer.interface';
 
 @Injectable()
-export class SqlSourceService implements OnModuleInit, OnModuleDestroy {
+export class SqlSourceService {
   private readonly logger = new Logger(SqlSourceService.name);
-  private client: Client;
 
   constructor(
-    private configService: ConfigService,
-    private queueService: QueueService,
-  ) {
-    this.client = new Client(this.configService.get('database.sql'));
-  }
+    @InjectRepository(CustomerEntity)
+    private customerRepository: Repository<CustomerEntity>,
+  ) {}
 
-  async onModuleInit() {
+  async getNewOrUpdatedCustomers(lastSyncTime?: Date): Promise<SqlCustomerData[]> {
     try {
-      await this.client.connect();
-      this.logger.log('Connected to SQL DB successfully.');
-    } catch (error) {
-      this.logger.error('Failed to connect to SQL DB', error.stack);
-    }
-  }
+      const query = this.customerRepository.createQueryBuilder('customer');
 
-  async onModuleDestroy() {
-    await this.client.end();
-    this.logger.log('Disconnected from SQL DB.');
-  }
-
-  async triggerExtraction(): Promise<void> {
-    this.logger.log('Starting SQL customer data extraction...');
-    try {
-      const batchSize = 100;
-      let offset = 0;
-      let processedCount = 0;
-
-      while (true) {
-        const query = `SELECT id, name, email, address, phone_number, created_at FROM customers ORDER BY id LIMIT $1 OFFSET $2`;
-        const res = await this.client.query(query, [batchSize, offset]);
-        const customers = res.rows;
-
-        if (customers.length === 0) {
-          this.logger.log('No more customers to fetch from SQL DB.');
-          break;
-        }
-
-        this.logger.log(
-          `Fetched ${customers.length} customers from SQL DB (offset: ${offset}). Queuing...`,
-        );
-        for (const customer of customers) {
-          const payload: RawCustomerDataPayload = {
-            source: 'sql',
-            data: customer,
-          };
-          await this.queueService.addRawCustomerDataJob(payload);
-        }
-        processedCount += customers.length;
-        offset += customers.length;
+      if (lastSyncTime) {
+        query.where('customer.updated_at > :lastSyncTime', { lastSyncTime });
+        this.logger.log(`Fetching incremental SQL data since ${lastSyncTime.toISOString()}`);
+      } else {
+        this.logger.log('Fetching full SQL data.');
       }
-      this.logger.log(
-        `Finished SQL extraction. Total customers queued: ${processedCount}.`,
-      );
+
+      const customers = await query.getMany();
+      this.logger.log(`Fetched ${customers.length} customers from SQL.`);
+      return customers.map(c => ({
+        id: c.id,
+        email: c.email,
+        phone_number: c.phone_number,
+        first_name: c.first_name,
+        last_name: c.last_name,
+        address_line1: c.address_line1,
+        city: c.city,
+        country: c.country,
+        dob: c.dob,
+        loyalty_points: c.loyalty_points,
+        last_order_date: c.last_order_date,
+        updated_at: c.updated_at,
+      }));
     } catch (error) {
-      this.logger.error('Error during SQL data extraction', error.stack);
+      this.logger.error(`Failed to fetch customers from SQL: ${error.message}`, error.stack);
+      throw error;
     }
   }
 }

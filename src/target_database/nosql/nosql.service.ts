@@ -1,44 +1,48 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import {
-  UnifiedMongoCustomer,
-  CustomerDocument,
-} from './schemas/customer.schema';
+import { Customer } from './schemas/customer.schema';
 import { UnifiedCustomerDto } from '../../common/dto/unified-customer.dto';
+import { UnifiedCustomer } from '../../common/interfaces/customer.interface';
 
 @Injectable()
-export class NosqlService {
-  private readonly logger = new Logger(NosqlService.name);
+export class NoSqlService {
+  private readonly logger = new Logger(NoSqlService.name);
 
-  constructor(
-    @InjectModel(UnifiedMongoCustomer.name)
-    private customerModel: Model<CustomerDocument>,
-  ) {}
+  constructor(@InjectModel(Customer.name) private customerModel: Model<Customer>) {}
 
-  async findCustomerByEmail(email: string): Promise<CustomerDocument | null> {
-    return this.customerModel.findOne({ email: email.toLowerCase() }).exec();
+  async findCustomerByEmail(email: string): Promise<UnifiedCustomer | null> {
+    try {
+      const customer = await this.customerModel.findOne({ email }).exec();
+      return customer ? customer.toObject() : null;
+    } catch (error) {
+      this.logger.error(`Failed to find customer by email ${email}: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
-  async findCustomerByCdpId(cdpId: string): Promise<CustomerDocument | null> {
-    return this.customerModel.findOne({ cdpId }).exec();
-  }
-
-  async upsertCustomer(
-    customerData: UnifiedCustomerDto,
-  ): Promise<CustomerDocument> {
-    this.logger.debug(`Upserting customer with cdpId: ${customerData.cdpId}`);
-    return this.customerModel
-      .findOneAndUpdate(
-        { cdpId: customerData.cdpId },
+  async upsertCustomer(customerData: UnifiedCustomerDto): Promise<UnifiedCustomer> {
+    try {
+      const options = { upsert: true, new: true, setDefaultsOnInsert: true };
+      const result = await this.customerModel.findOneAndUpdate(
+        { email: customerData.email },
         {
-          $set: customerData,
+          $set: {
+            ...customerData,
+            updated_at: new Date(),
+          },
           $setOnInsert: {
-            cdpCreatedAt: customerData.cdpCreatedAt || new Date(),
+            created_at: new Date(),
           },
         },
-        { upsert: true, new: true, runValidators: true },
-      )
-      .exec();
+        options
+      ).exec();
+
+      this.logger.debug(`Upserted customer: ${result.email}`);
+      return result.toObject();
+    } catch (error) {
+      this.logger.error(`Failed to upsert customer ${customerData.email}: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 }

@@ -1,34 +1,55 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document } from 'mongoose';
+import { HydratedDocument } from 'mongoose';
 
-export type CustomerDocument = UnifiedMongoCustomer & Document;
+export type CustomerDocument = HydratedDocument<Customer>;
 
-@Schema({
-  timestamps: { createdAt: 'cdpCreatedAt', updatedAt: 'cdpUpdatedAt' },
-  collection: 'unified_customers',
-})
-export class UnifiedMongoCustomer {
-  @Prop({ required: true, unique: true, index: true })
-  cdpId: string;
-
-  @Prop({ required: true, unique: true, index: true, lowercase: true })
+@Schema({ timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } })
+export class Customer {
+  @Prop({ required: true, unique: true })
   email: string;
 
-  @Prop()
-  firstName?: string;
+  @Prop({ required: true, unique: true })
+  common_id: string;
 
   @Prop()
-  lastName?: string;
+  phone?: string;
 
   @Prop()
-  phoneNumber?: string;
+  first_name?: string;
 
-  @Prop({ type: Date })
-  originalCreatedAt?: Date;
+  @Prop()
+  last_name?: string;
 
-  @Prop({ type: [String], index: true })
-  sourceSystems?: string[];
+  @Prop({ type: Object })
+  address?: {
+    street?: string;
+    city?: string;
+    country?: string;
+  };
+
+  @Prop()
+  birth_date?: string;
+
+  @Prop()
+  loyalty_points?: number;
+
+  @Prop()
+  last_purchase_date?: string;
+
+  @Prop({ type: Object })
+  api_specific_data?: Record<string, any>;
+
+  @Prop([String])
+  source_system?: string[];
+
+  @Prop()
+  created_at: Date;
+
+  @Prop()
+  updated_at: Date;
 }
 
-export const CustomerSchema =
-  SchemaFactory.createForClass(UnifiedMongoCustomer);
+export const CustomerSchema = SchemaFactory.createForClass(Customer);
+
+CustomerSchema.index({ email: 1 });
+CustomerSchema.index({ common_id: 1 });
